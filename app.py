@@ -1,56 +1,52 @@
-import streamlit as st
-import asyncio
-import httpx
-from holehe import core
-import pandas as pd
+import time
+import random
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
 
-# دیزاینی وێبسایتەکە
-st.set_page_config(page_title="Cyber AI - Email Finder", page_icon="🛡️")
-
-st.markdown("""
-    <style>
-    .main { background-color: #f0f2f6; }
-    .stButton>button { width: 100%; background-color: #ff4b4b; color: white; }
-    </style>
-    """, unsafe_allow_usage=True)
-
-st.title("🔍 Email OSINT Identifier")
-st.write("ئەم ئامرازە بەکاردێت بۆ دۆزینەوەی ناسنامە لە ڕێگەی ئیمەیڵەوە")
-
-email = st.text_input("ئیمەیڵی ئامانج لێرە بنووسە:", placeholder="example@gmail.com")
-
-async def scan_email(target_email):
-    results_found = []
-    modules = core.import_submodules("holehe.modules")
-    tasks = [core.call_module(module, target_email, []) for module in modules]
+def get_advanced_driver():
+    options = Options()
+    # دروستکردنی ناسنامەی جیاواز بۆ تێپەڕاندنی سیکیوریتی
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
+    ]
+    options.add_argument(f'user-agent={random.choice(user_agents)}')
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option('useAutomationExtension', False)
     
-    # پشکنینی Holehe
-    responses = await asyncio.gather(*tasks)
-    for res in responses:
-        if res and res.get("exists"):
-            results_found.append({"پلاتفۆرم": res.get("name"), "دۆخ": "✅ ئەکاونت هەیە"})
-    return results_found
+    # بەکارهێنانی وێبگەڕ بەبێ ئەوەی پشانت بدات (Headless) ئەگەر ویستت
+    # options.add_argument("--headless") 
 
-if st.button("گەڕان دەستپێبکە"):
-    if "@" in email:
-        with st.spinner('خەریکی پشکنینی داتابەیسەکانم...'):
-            try:
-                # بەکارهێنانی loop بۆ asyncio
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                data = loop.run_until_complete(scan_email(email))
-                
-                if data:
-                    st.success(f"کۆتایی هات! {len(data)} ئەکاونت دۆزرایەوە.")
-                    st.table(pd.DataFrame(data))
-                    
-                    # بەشی دۆزینەوەی یوزەرنەیم
-                    user = email.split('@')[0]
-                    st.info(f"یوزەرنەیمی پێشبینیکراو: {user}")
-                    st.markdown(f"**[🌐 گەڕانی قووڵ لە گوگڵ بۆ ئەم ناسنامەیە](https://www.google.com/search?q=%22{user}%22)**")
-                else:
-                    st.warning("هیچ ئەکاونتێک لە داتابەیسەکان نەدۆزرایەوە.")
-            except Exception as e:
-                st.error(f"هەڵەیەک ڕوویدا: {e}")
-    else:
-        st.error("تکایە ئیمەیڵێکی دروست بنووسە.")
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    return driver
+
+def check_site(email, site_url, input_id):
+    driver = get_advanced_driver()
+    try:
+        driver.get(site_url)
+        time.sleep(random.uniform(2, 5)) # وەستان بۆ ئەوەی وەک ڕۆبۆت دەرنەکەوێت
+        
+        search_input = driver.find_element(By.ID, input_id)
+        search_input.send_keys(email)
+        time.sleep(1)
+        
+        # لێرەدا دەتوانیت پشکنین بکەیت ئەگەر وەڵامی سایتەکە وتی ئیمێڵەکە هەیە
+        print(f"[*] Checking {site_url} for {email}...")
+        
+        # تێبینی: هەر سایتێک Logic ی خۆی هەیە بۆ پشکنین
+        # ئەمە وەک نموونەیە بۆ تێپەڕاندنی سیکیوریتی سەرەتایی
+        
+    except Exception as e:
+        print(f"[!] Error checking {site_url}: {e}")
+    finally:
+        driver.quit()
+
+if __name__ == "__main__":
+    email = input("Target Email: ")
+    # نموونەی پشکنین بۆ سایتێکی دیاریکراو
+    check_site(email, "https://accounts.google.com/", "identifierId")
