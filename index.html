@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Search & Copy</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; background-color: #1a1a1a; color: white; text-align: center; padding: 50px; }
+        .container { background: #2d2d2d; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #444; }
+        input { padding: 10px; width: 60%; border-radius: 5px; border: none; }
+        button { padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 15px; color: #00ff00; }
+    </style>
+</head>
+<body>
+
+    <!-- بەشی یەکەم: کۆپی کردنی لینک -->
+    <div class="container">
+        <h2>کۆپی کردنی لینک</h2>
+        <input type="text" value="https://pqr.me/z9fpMym4" id="myLink" readonly>
+        <button onclick="copyLink()">کۆپی بکە</button>
+    </div>
+
+    <!-- بەشی دووەم: گەڕان بەدوای ئیمێڵ -->
+    <div class="container">
+        <h2>گەڕان بۆ ئیمێڵ</h2>
+        <input type="email" id="emailInput" placeholder="ئیمێڵەکە بنوسە...">
+        <button onclick="searchEmail()">بگەڕێ</button>
+        <div id="searchResult" class="result"></div>
+    </div>
+
+    <script>
+        // فەرمانی کۆپی کردن
+        function copyLink() {
+            var copyText = document.getElementById("myLink");
+            copyText.select();
+            document.execCommand("copy");
+            alert("لینکەکە کۆپی کرا!");
+        }
+
+        // فەرمانی گەڕان (نمونەی ساکار)
+        function searchEmail() {
+            var email = document.getElementById("emailInput").value;
+            var resultDiv = document.getElementById("searchResult");
+            
+            if(email === "") {
+                resultDiv.innerText = "تکایە ئیمێڵێک بنوسە.";
+                return;
+            }
+
+            // لێرەدا دەبێت پەیوەندی بە API یان Database بکەیت
+            // بۆ تاقیکردنەوە ئەم نمونەیەمان داناوە:
+            resultDiv.innerText = "دەگەڕێم بەدوای: " + email + " ... ئەنجام نەدۆزرایەوە.";
+        }
+    </script>
+
+</body>
+</html>
