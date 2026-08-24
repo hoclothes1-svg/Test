@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
 # زانیارییەکان
-TOKEN = '8701131068:AAE6I4gfU7nyLVjU1vu_4GBUy5A4_2s6Wvs'
+TOKEN = '8711589571:AAHn2FpUq5WnC0D7x-p9Fg3o9bfc2scEEOc'
 ADMIN_ID = 7641255924  # ئایدییەکەی تۆ جێگیر کرا
 WEBSITE_PATH = '/var/www/html/' # ناونیشانی فایلەکان لەسەر سێرڤەر
 
